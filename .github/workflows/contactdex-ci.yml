@@ -17,24 +17,26 @@ jobs:
       matrix:
         node-version: [18.x, 20.x]
 
-    defaults:
-      run:
-        working-directory: ./backend
-
     steps:
+      # Step 1: Clone the repository files into the environment runner
       - name: Checkout Application Repository Code
         uses: actions/checkout@v4
 
+      # Step 2: Establish the clean virtual Node environment
       - name: Initialize Node.js Environment (Version ${{ matrix.node-version }})
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
+      # Step 3: Install clean packages explicitly targeting the backend subfolder
       - name: Install Project Package Dependencies
+        working-directory: ./backend
         run: npm ci
 
+      # Step 4: Audit security bindings safely inside the backend context
       - name: Audit Core App Secrets Mapping
+        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -45,10 +47,12 @@ jobs:
           if [ -z "$JWT_SECRET" ]; then echo "CRITICAL ERROR: JWT_SECRET Secret Missing"; exit 1; fi
           echo "All operational application bindings verified successfully."
 
+      # Step 5: Fire up Mocha unit tests cleanly inside the backend context
       - name: Execute Test Suite via Mocha & Sinon
+        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          PORT: 5000 
+          PORT: 5000
           NODE_ENV: test
         run: npm test
