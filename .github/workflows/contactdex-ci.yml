@@ -29,11 +29,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      # Step 3: Install clean packages explicitly targeting the backend subfolder
+       # Step 3: Force-install all testing frameworks directly on the cloud runner
       - name: Install Project Package Dependencies
         working-directory: ./backend
-        run: npm ci
-
+        run: |
+          npm install
+          npm install --save-dev mocha chai sinon
+          
       # Step 4: Audit security bindings safely inside the backend context
       - name: Audit Core App Secrets Mapping
         working-directory: ./backend
