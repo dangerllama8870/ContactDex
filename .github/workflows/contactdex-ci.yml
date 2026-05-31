@@ -1,0 +1,54 @@
+name: ContactDex Core CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-automation:
+    name: Run Automated Quality Test Suite
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+      - name: Checkout Application Repository Code
+        uses: actions/checkout@v4
+
+      - name: Initialize Node.js Environment (Version ${{ matrix.node-version }})
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Project Package Dependencies
+        run: npm ci
+
+      - name: Audit Core App Secrets Mapping
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: ${{ secrets.PORT }}
+        run: |
+          echo "Evaluating Pipeline Key-Value Injectors..."
+          if [ -z "$MONGO_URI" ]; then echo "CRITICAL ERROR: MONGO_URI Secret Missing"; exit 1; fi
+          if [ -z "$JWT_SECRET" ]; then echo "CRITICAL ERROR: JWT_SECRET Secret Missing"; exit 1; fi
+          echo "All operational application bindings verified successfully."
+
+      - name: Execute Test Suite via Mocha & Sinon
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          PORT: 5000 
+          NODE_ENV: test
+        run: npm test
