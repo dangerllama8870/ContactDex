@@ -29,16 +29,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-       # Step 3: Force-install all testing frameworks directly on the cloud runner
+      # Step 3: Install dependencies directly at the root level
       - name: Install Project Package Dependencies
-        working-directory: ./backend
-        run: |
-          npm install
-          npm install --save-dev mocha chai sinon
-          
-      # Step 4: Audit security bindings safely inside the backend context
+        run: npm install --legacy-peer-deps
+
+      # Step 4: Audit security bindings safely at the root level
       - name: Audit Core App Secrets Mapping
-        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -49,9 +45,8 @@ jobs:
           if [ -z "$JWT_SECRET" ]; then echo "CRITICAL ERROR: JWT_SECRET Secret Missing"; exit 1; fi
           echo "All operational application bindings verified successfully."
 
-      # Step 5: Fire up Mocha unit tests cleanly inside the backend context
+      # Step 5: Fire up Mocha unit tests at the root level
       - name: Execute Test Suite via Mocha & Sinon
-        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
