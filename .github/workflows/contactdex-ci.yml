@@ -18,23 +18,22 @@ jobs:
         node-version: [20.x]
 
     steps:
-      # Step 1: Clone the repository files into the environment runner
       - name: Checkout Application Repository Code
         uses: actions/checkout@v4
 
-      # Step 2: Establish the clean virtual Node environment
-      - name: Initialize Node.js Environment (Version ${{ matrix.node-version }})
+      - name: Initialize Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
 
-      # Step 3: Install dependencies directly at the root level
       - name: Install Project Package Dependencies
+        working-directory: ./backend
         run: npm install --legacy-peer-deps
 
-      # Step 4: Audit security bindings safely at the root level
       - name: Audit Core App Secrets Mapping
+        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -45,8 +44,8 @@ jobs:
           if [ -z "$JWT_SECRET" ]; then echo "CRITICAL ERROR: JWT_SECRET Secret Missing"; exit 1; fi
           echo "All operational application bindings verified successfully."
 
-      # Step 5: Fire up Mocha unit tests at the root level
       - name: Execute Test Suite via Mocha & Sinon
+        working-directory: ./backend
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
