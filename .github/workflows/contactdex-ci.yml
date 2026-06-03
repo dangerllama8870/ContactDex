@@ -11,7 +11,7 @@ on:
 jobs:
   test-automation:
     name: Run Automated Quality Test Suite
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     strategy:
       matrix:
